@@ -4,32 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Autoevaluación Escolaris</title>
-    <!-- Tailwind CSS para los estilos -->
+    <!-- Tailwind CSS para el diseño -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React y Babel para ejecutar el código directamente en el navegador -->
+    <!-- Librerías de React para el navegador -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel para traducir el código al instante -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Lucide Icons -->
+    <!-- Iconos de Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- html2canvas para la descarga de PNG -->
+    <!-- html2canvas para descargar la imagen PNG -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .custom-shadow { shadow-[0_10px_0_0_#ca8a04] }
+        body { font-family: 'Inter', sans-serif; background-color: #f0f9ff; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useRef } = React;
+        const { useState, useRef, useEffect } = React;
 
-        // Componente de Icono Simple para reemplazar lucide-react en esta versión
-        const Icon = ({ name, size = 24, className = "" }) => {
-            return <i data-lucide={name} className={className} style={{ width: size, height: size }}></i>;
+        // Componente para los iconos que el navegador sí entiende
+        const LucideIcon = ({ name, size = 24, className = "" }) => {
+            return <i data-lucide={name} className={className} style={{ width: size, height: size, display: 'inline-block' }}></i>;
         };
 
         const App = () => {
@@ -47,15 +47,14 @@
 
             const [showReport, setShowReport] = useState(false);
             const [isDownloading, setIsDownloading] = useState(false);
-            const [errorMsg, setErrorMsg] = useState("");
             const reportRef = useRef(null);
 
-            // Cargar iconos de Lucide después de cada renderizado
-            React.useEffect(() => {
+            // Importante: activar los iconos de Lucide después de dibujar la pantalla
+            useEffect(() => {
                 if (window.lucide) {
                     window.lucide.createIcons();
                 }
-            });
+            }, [showReport, evaluacion]);
 
             const materias = ["Ciencias Naturales", "Formación Ciudadana", "Comunicación y Lenguaje"];
             const grados = ["4° Primaria", "5° Primaria", "6° Primaria"];
@@ -67,10 +66,10 @@
                 }));
             };
 
+            // Función corregida: ahora definida correctamente dentro del componente
             const generateReport = () => {
-                if (!formData.nombre || !formData.leccion) {
-                    setErrorMsg("¡Ups! Por favor escribe tu nombre y el nombre de la lección.");
-                    setTimeout(() => setErrorMsg(""), 3000);
+                if (!formData.nombre.trim() || !formData.leccion.trim()) {
+                    alert("¡Ups! Por favor escribe tu nombre y el nombre de la lección antes de terminar.");
                     return;
                 }
                 setShowReport(true);
@@ -79,85 +78,87 @@
             const downloadPNG = async () => {
                 setIsDownloading(true);
                 if (reportRef.current) {
-                    const canvas = await html2canvas(reportRef.current, {
-                        backgroundColor: '#ffffff',
-                        scale: 2,
-                        useCORS: true
-                    });
-                    const image = canvas.toDataURL("image/png");
-                    const link = document.createElement('a');
-                    link.href = image;
-                    link.download = `Reporte_Escolaris_${formData.nombre.replace(/\s+/g, '_')}.png`;
-                    link.click();
+                    try {
+                        const canvas = await html2canvas(reportRef.current, {
+                            backgroundColor: '#ffffff',
+                            scale: 2,
+                            useCORS: true
+                        });
+                        const image = canvas.toDataURL("image/png");
+                        const link = document.createElement('a');
+                        link.href = image;
+                        link.download = `Reporte_${formData.nombre.replace(/\s+/g, '_')}.png`;
+                        link.click();
+                    } catch (err) {
+                        console.error("Error al descargar:", err);
+                        alert("Hubo un problema al generar la imagen. Intenta de nuevo.");
+                    }
                 }
                 setIsDownloading(false);
             };
 
             return (
-                <div className="min-h-screen bg-[#f0f9ff] text-slate-800 pb-20">
+                <div className="min-h-screen pb-20">
                     {/* Header */}
                     <header className="bg-[#1e3a45] text-white p-5 shadow-lg border-b-4 border-[#eab308]">
                         <div className="max-w-4xl mx-auto flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="bg-white p-2 rounded-2xl rotate-3">
-                                    <Icon name="pen-tool" className="text-[#eab308]" />
+                                <div className="bg-white p-2 rounded-2xl rotate-3 shadow-md">
+                                    <LucideIcon name="pen-tool" className="text-[#eab308]" />
                                 </div>
                                 <div>
-                                    <h1 className="text-2xl font-black">ESCOLARIS</h1>
+                                    <h1 className="text-2xl font-black leading-none text-white">ESCOLARIS</h1>
                                     <p className="text-[10px] uppercase tracking-widest text-yellow-400 font-bold">Educación para trascender</p>
                                 </div>
                             </div>
-                            <div className="hidden sm:flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full">
-                                <Icon name="sparkles" size={16} className="text-yellow-300" />
-                                <span className="text-xs font-black uppercase">{formData.grado}</span>
+                            <div className="hidden sm:flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full border border-white/20">
+                                <LucideIcon name="sparkles" size={16} className="text-yellow-300" />
+                                <span className="text-xs font-black uppercase tracking-wider">{formData.grado}</span>
                             </div>
                         </div>
                     </header>
 
                     <main className="max-w-4xl mx-auto px-4 py-10">
                         <div className="text-center mb-12">
-                            <h2 className="text-4xl md:text-5xl font-black text-[#1e3a45] mb-4">¿Cómo me fue hoy? 🎨</h2>
-                            <p className="text-lg text-slate-500 font-medium">Completa tu autoevaluación y descarga tu insignia.</p>
+                            <h2 className="text-4xl md:text-5xl font-black text-[#1e3a45] mb-4 drop-shadow-sm">¿Cómo me fue hoy? 🎨</h2>
+                            <p className="text-lg text-slate-500 font-medium italic">"Cada pequeño esfuerzo cuenta para tu gran meta"</p>
                         </div>
 
-                        {errorMsg && (
-                            <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-rose-500 text-white px-6 py-3 rounded-full font-bold shadow-xl animate-bounce">
-                                {errorMsg}
-                            </div>
-                        )}
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                            {/* Datos */}
-                            <div className="bg-white p-8 rounded-[2rem] shadow-xl border-t-8 border-blue-400">
+                            {/* Datos Alumno */}
+                            <div className="bg-white p-8 rounded-[2rem] shadow-xl border-t-8 border-blue-400 transform transition-all">
                                 <div className="mb-6">
                                     <label className="text-xs font-black text-blue-500 uppercase mb-3 block">Mi Nombre</label>
-                                    <input type="text" placeholder="..." className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl font-bold" value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} />
+                                    <input type="text" placeholder="Escribe tu nombre..." className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl font-bold outline-none focus:border-blue-400 transition-all" value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} />
                                 </div>
                                 <div>
                                     <label className="text-xs font-black text-blue-500 uppercase mb-3 block">Mi Grado</label>
-                                    <select className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl font-bold" value={formData.grado} onChange={e => setFormData({...formData, grado: e.target.value})}>
+                                    <select className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl font-bold cursor-pointer" value={formData.grado} onChange={e => setFormData({...formData, grado: e.target.value})}>
                                         {grados.map(g => <option key={g} value={g}>{g}</option>)}
                                     </select>
                                 </div>
                             </div>
 
-                            <div className="bg-white p-8 rounded-[2rem] shadow-xl border-t-8 border-amber-400">
+                            {/* Datos Lección */}
+                            <div className="bg-white p-8 rounded-[2rem] shadow-xl border-t-8 border-amber-400 transform transition-all">
                                 <div className="mb-6">
                                     <label className="text-xs font-black text-amber-600 uppercase mb-3 block">Materia</label>
-                                    <select className="w-full p-4 bg-amber-50 border-2 border-amber-100 rounded-2xl font-bold" value={formData.materia} onChange={e => setFormData({...formData, materia: e.target.value})}>
+                                    <select className="w-full p-4 bg-amber-50 border-2 border-amber-100 rounded-2xl font-bold cursor-pointer" value={formData.materia} onChange={e => setFormData({...formData, materia: e.target.value})}>
                                         {materias.map(m => <option key={m} value={m}>{m}</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-black text-amber-600 uppercase mb-3 block">Lección</label>
-                                    <input type="text" placeholder="Ej. El Universo" className="w-full p-4 bg-amber-50 border-2 border-amber-100 rounded-2xl font-bold" value={formData.leccion} onChange={e => setFormData({...formData, leccion: e.target.value})} />
+                                    <label className="text-xs font-black text-amber-600 uppercase mb-3 block">Nombre de la Lección</label>
+                                    <input type="text" placeholder="Ej. Los Seres Vivos" className="w-full p-4 bg-amber-50 border-2 border-amber-100 rounded-2xl font-bold outline-none focus:border-amber-400 transition-all" value={formData.leccion} onChange={e => setFormData({...formData, leccion: e.target.value})} />
                                 </div>
                             </div>
                         </div>
 
-                        {/* Esfuerzo */}
+                        {/* Mi Esfuerzo */}
                         <section className="bg-white p-10 rounded-[2.5rem] shadow-xl border-b-8 border-slate-100 mb-10">
-                            <h3 className="text-2xl font-black text-[#1e3a45] mb-8">🚀 Mi Esfuerzo</h3>
+                            <h3 className="text-2xl font-black text-[#1e3a45] mb-8 flex items-center gap-3">
+                                <span className="bg-purple-100 p-2 rounded-xl">🚀</span> Mi Esfuerzo
+                            </h3>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                 {[
                                     { id: 'ley', label: 'Leí contenido', icon: 'book-open', color: 'bg-emerald-500' },
@@ -165,9 +166,13 @@
                                     { id: 'hiceTareas', label: 'Hice tareas', icon: 'pen-tool', color: 'bg-indigo-500' },
                                     { id: 'fuiPuntual', label: 'Fui puntual', icon: 'clock', color: 'bg-rose-500' }
                                 ].map(item => (
-                                    <button key={item.id} onClick={() => toggleEsfuerzo(item.id)} className={`flex flex-col items-center p-6 rounded-[2rem] border-b-4 transition-all ${evaluacion.esfuerzo[item.id] ? `${item.color} text-white shadow-lg` : 'bg-slate-50 text-slate-300'}`}>
-                                        <Icon name={item.icon} className="mb-3" />
-                                        <span className="text-[10px] font-black uppercase text-center">{item.label}</span>
+                                    <button 
+                                        key={item.id} 
+                                        onClick={() => toggleEsfuerzo(item.id)} 
+                                        className={`flex flex-col items-center p-6 rounded-[2rem] border-b-4 transition-all transform active:scale-95 ${evaluacion.esfuerzo[item.id] ? `${item.color} text-white shadow-lg border-black/10` : 'bg-slate-50 text-slate-300 border-slate-100'}`}
+                                    >
+                                        <LucideIcon name={item.icon} size={32} className="mb-3" />
+                                        <span className="text-[10px] font-black uppercase text-center leading-none">{item.label}</span>
                                     </button>
                                 ))}
                             </div>
@@ -178,65 +183,75 @@
                             <h3 className="text-2xl font-black text-[#1e3a45] mb-8">💡 ¿Cuánto aprendí?</h3>
                             <div className="flex justify-center gap-4 mb-6">
                                 {[1, 2, 3, 4, 5].map(star => (
-                                    <button key={star} onClick={() => setEvaluacion(prev => ({...prev, comprension: star}))} className={`transition-transform hover:scale-125 ${evaluacion.comprension >= star ? 'text-yellow-400' : 'text-slate-200'}`}>
-                                        <Icon name="star" size={54} className={evaluacion.comprension >= star ? "fill-current" : ""} />
+                                    <button key={star} onClick={() => setEvaluacion(prev => ({...prev, comprension: star}))} className={`transition-all transform hover:scale-125 ${evaluacion.comprension >= star ? 'text-yellow-400 drop-shadow-md' : 'text-slate-200'}`}>
+                                        <LucideIcon name="star" size={60} className={evaluacion.comprension >= star ? "fill-current" : ""} />
                                     </button>
                                 ))}
                             </div>
+                            <div className="inline-block bg-[#1e3a45] text-white px-8 py-2 rounded-full font-black text-sm uppercase tracking-widest shadow-lg">
+                                {evaluacion.comprension === 5 ? "🌟 ¡Soy experto! 🌟" : evaluacion.comprension >= 3 ? "👍 ¡Entendí bien! 👍" : "🤔 Necesito repasar"}
+                            </div>
                         </section>
 
-                        {/* Botones */}
+                        {/* Botones Finales */}
                         <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                            <button onClick={() => window.location.reload()} className="px-8 py-5 rounded-[1.5rem] border-4 border-slate-200 text-slate-400 font-black">REINICIAR</button>
-                            <button onClick={generateReport} className="px-16 py-5 rounded-[1.5rem] bg-[#eab308] text-[#1e3a45] font-black text-xl shadow-[0_10px_0_0_#ca8a04] hover:-translate-y-1 transition-all">¡GENERAR REPORTE!</button>
+                            <button onClick={() => window.location.reload()} className="px-8 py-5 rounded-[1.5rem] border-4 border-slate-200 text-slate-400 font-black hover:bg-white hover:text-rose-500 hover:border-rose-200 transition-all shadow-md">LIMPIAR</button>
+                            <button onClick={generateReport} className="px-16 py-5 rounded-[1.5rem] bg-[#eab308] text-[#1e3a45] font-black text-xl shadow-[0_10px_0_0_#ca8a04] hover:-translate-y-1 active:translate-y-1 active:shadow-none transition-all">¡GENERAR MI REPORTE!</button>
                         </div>
 
-                        {/* Modal Reporte */}
+                        {/* Modal del Reporte */}
                         {showReport && (
                             <div className="fixed inset-0 bg-[#1e3a45]/95 backdrop-blur-xl z-50 flex flex-col items-center justify-center p-4 overflow-y-auto">
-                                <div ref={reportRef} className="bg-white rounded-[2.5rem] max-w-lg w-full overflow-hidden shadow-2xl border-8 border-white mb-6">
-                                    <div className="bg-[#1e3a45] p-8 text-center text-white">
-                                        <Icon name="award" size={64} className="mx-auto text-yellow-400 mb-4" />
+                                <div ref={reportRef} className="bg-white rounded-[2.5rem] max-w-lg w-full overflow-hidden shadow-2xl border-8 border-white mb-6 animate-in zoom-in duration-300">
+                                    <div className="bg-[#1e3a45] p-8 text-center text-white relative">
+                                        <LucideIcon name="award" size={64} className="mx-auto text-yellow-400 mb-4" />
                                         <h4 className="text-2xl font-black">REPORTE DE ÉXITO</h4>
-                                        <p className="text-yellow-400 text-[10px] font-black uppercase">ESCOLARIS • {formData.grado}</p>
+                                        <p className="text-yellow-400 text-[10px] font-black uppercase tracking-widest">ESCOLARIS • {formData.grado}</p>
                                     </div>
                                     <div className="p-8 space-y-4">
-                                        <div className="bg-blue-50 p-4 rounded-xl flex justify-between font-black text-[#1e3a45]">
-                                            <span className="text-blue-400 text-[10px] uppercase">Alumno</span>
+                                        <div className="bg-blue-50 p-4 rounded-xl flex justify-between items-center font-black text-[#1e3a45]">
+                                            <span className="text-blue-400 text-[10px] uppercase">Alumno:</span>
                                             <span>{formData.nombre}</span>
                                         </div>
                                         <div className="bg-amber-50 p-4 rounded-xl text-center font-black text-[#1e3a45]">
                                             <p className="text-amber-600 text-[10px] uppercase mb-1">{formData.materia}</p>
-                                            <p>"{formData.leccion}"</p>
+                                            <p className="text-lg">"{formData.leccion}"</p>
                                         </div>
-                                        <div className="bg-slate-50 p-4 rounded-xl flex flex-wrap gap-2 justify-center">
-                                            {evaluacion.esfuerzo.ley && <span className="bg-emerald-500 text-white px-2 py-1 rounded-full text-[8px] font-black uppercase">Lectura</span>}
-                                            {evaluacion.esfuerzo.viVideos && <span className="bg-sky-500 text-white px-2 py-1 rounded-full text-[8px] font-black uppercase">Videos</span>}
-                                            {evaluacion.esfuerzo.hiceTareas && <span className="bg-indigo-500 text-white px-2 py-1 rounded-full text-[8px] font-black uppercase">Tareas</span>}
-                                            {evaluacion.esfuerzo.fuiPuntual && <span className="bg-rose-500 text-white px-2 py-1 rounded-full text-[8px] font-black uppercase">Puntual</span>}
+                                        <div className="bg-slate-50 p-4 rounded-xl flex flex-wrap gap-2 justify-center border-2 border-dashed border-slate-200">
+                                            {evaluacion.esfuerzo.ley && <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase">Lectura</span>}
+                                            {evaluacion.esfuerzo.viVideos && <span className="bg-sky-500 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase">Videos</span>}
+                                            {evaluacion.esfuerzo.hiceTareas && <span className="bg-indigo-500 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase">Tareas</span>}
+                                            {evaluacion.esfuerzo.fuiPuntual && <span className="bg-rose-500 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase">Puntual</span>}
+                                            {!Object.values(evaluacion.esfuerzo).some(v => v) && <span className="text-[9px] text-slate-400 font-black italic">Sin metas registradas</span>}
                                         </div>
                                         <div className="text-center pt-4 border-t">
                                             <div className="flex justify-center gap-1 text-yellow-400 mb-1">
-                                                {[...Array(evaluacion.comprension)].map((_, i) => <Icon key={i} name="star" size={24} className="fill-current" />)}
+                                                {[...Array(evaluacion.comprension)].map((_, i) => <LucideIcon key={i} name="star" size={28} className="fill-current" />)}
                                             </div>
-                                            <p className="text-[10px] font-black uppercase text-slate-400">Logro: {evaluacion.comprension}/5</p>
+                                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Logro de Aprendizaje: {evaluacion.comprension}/5</p>
                                         </div>
+                                    </div>
+                                    <div className="bg-yellow-50 p-3 text-center">
+                                        <p className="text-[9px] text-amber-600 font-black uppercase tracking-tighter">FECHA: {new Date().toLocaleDateString()} • {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                                     </div>
                                 </div>
 
+                                {/* Instrucciones y Botones */}
                                 <div className="max-w-lg w-full space-y-4">
                                     <div className="bg-white/10 border border-white/20 p-6 rounded-[2rem] text-white">
-                                        <h5 className="text-center font-black text-yellow-400 uppercase mb-4">¿Cómo compartir?</h5>
+                                        <h5 className="text-center font-black text-yellow-400 uppercase mb-4 tracking-widest">¿Cómo compartir tu éxito?</h5>
                                         <div className="space-y-3 text-xs font-bold">
-                                            <div className="flex items-center gap-3"><div className="bg-yellow-400 text-[#1e3a45] w-5 h-5 rounded-full flex items-center justify-center font-black">1</div> Pulsa el botón verde de abajo.</div>
-                                            <div className="flex items-center gap-3"><div className="bg-yellow-400 text-[#1e3a45] w-5 h-5 rounded-full flex items-center justify-center font-black">2</div> Busca la imagen en tus descargas.</div>
-                                            <div className="flex items-center gap-3"><div className="bg-yellow-400 text-[#1e3a45] w-5 h-5 rounded-full flex items-center justify-center font-black">3</div> Súbela a la plataforma de tareas.</div>
+                                            <div className="flex items-center gap-3"><div className="bg-yellow-400 text-[#1e3a45] w-6 h-6 rounded-full flex items-center justify-center font-black shrink-0">1</div> Pulsa el botón verde de "DESCARGAR PNG".</div>
+                                            <div className="flex items-center gap-3"><div className="bg-yellow-400 text-[#1e3a45] w-6 h-6 rounded-full flex items-center justify-center font-black shrink-0">2</div> Busca la imagen en tu carpeta de "Descargas".</div>
+                                            <div className="flex items-center gap-3"><div className="bg-yellow-400 text-[#1e3a45] w-6 h-6 rounded-full flex items-center justify-center font-black shrink-0">3</div> Sube ese archivo a la plataforma de clases.</div>
                                         </div>
                                     </div>
-                                    <div className="flex gap-4">
-                                        <button onClick={() => setShowReport(false)} className="flex-1 py-4 rounded-2xl border-2 border-white/20 text-white font-black uppercase">Regresar</button>
-                                        <button onClick={downloadPNG} disabled={isDownloading} className="flex-[2] py-4 rounded-2xl bg-green-500 text-white font-black uppercase hover:bg-green-400 transition-all shadow-xl">
-                                            {isDownloading ? "Cargando..." : "Descargar Reporte (PNG)"}
+                                    <div className="flex flex-col sm:flex-row gap-4">
+                                        <button onClick={() => setShowReport(false)} className="flex-1 py-4 rounded-2xl border-2 border-white/20 text-white font-black uppercase tracking-widest hover:bg-white/10 transition-all">Regresar</button>
+                                        <button onClick={downloadPNG} disabled={isDownloading} className="flex-[2] py-4 rounded-2xl bg-green-500 text-white font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-green-400 active:scale-95 transition-all">
+                                            {isDownloading ? "Cargando..." : (
+                                                <React.Fragment><LucideIcon name="download" /> DESCARGAR REPORTE (PNG)</React.Fragment>
+                                            )}
                                         </button>
                                     </div>
                                 </div>
