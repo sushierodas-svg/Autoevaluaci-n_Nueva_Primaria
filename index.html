@@ -19,6 +19,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f0f9ff; }
+        .animate-pop { animation: pop 0.3s ease-out; }
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -27,7 +33,6 @@
     <script type="text/babel">
         const { useState, useRef, useEffect } = React;
 
-        // Componente para los iconos que el navegador sí entiende
         const LucideIcon = ({ name, size = 24, className = "" }) => {
             return <i data-lucide={name} className={className} style={{ width: size, height: size, display: 'inline-block' }}></i>;
         };
@@ -43,13 +48,14 @@
             const [evaluacion, setEvaluacion] = useState({
                 esfuerzo: { ley: false, viVideos: false, hiceTareas: false, fuiPuntual: false },
                 comprension: 3,
+                sentimiento: 'feliz',
+                mejora: { apuntes: false, dudas: false, tiempo: false, repasar: false }
             });
 
             const [showReport, setShowReport] = useState(false);
             const [isDownloading, setIsDownloading] = useState(false);
             const reportRef = useRef(null);
 
-            // Importante: activar los iconos de Lucide después de dibujar la pantalla
             useEffect(() => {
                 if (window.lucide) {
                     window.lucide.createIcons();
@@ -66,7 +72,13 @@
                 }));
             };
 
-            // Función corregida: ahora definida correctamente dentro del componente
+            const toggleMejora = (key) => {
+                setEvaluacion(prev => ({
+                    ...prev,
+                    mejora: { ...prev.mejora, [key]: !prev.mejora[key] }
+                }));
+            };
+
             const generateReport = () => {
                 if (!formData.nombre.trim() || !formData.leccion.trim()) {
                     alert("¡Ups! Por favor escribe tu nombre y el nombre de la lección antes de terminar.");
@@ -90,8 +102,8 @@
                         link.download = `Reporte_${formData.nombre.replace(/\s+/g, '_')}.png`;
                         link.click();
                     } catch (err) {
-                        console.error("Error al descargar:", err);
-                        alert("Hubo un problema al generar la imagen. Intenta de nuevo.");
+                        console.error("Error:", err);
+                        alert("No pudimos generar la imagen. Inténtalo de nuevo.");
                     }
                 }
                 setIsDownloading(false);
@@ -121,12 +133,12 @@
                     <main className="max-w-4xl mx-auto px-4 py-10">
                         <div className="text-center mb-12">
                             <h2 className="text-4xl md:text-5xl font-black text-[#1e3a45] mb-4 drop-shadow-sm">¿Cómo me fue hoy? 🎨</h2>
-                            <p className="text-lg text-slate-500 font-medium italic">"Cada pequeño esfuerzo cuenta para tu gran meta"</p>
+                            <p className="text-lg text-slate-500 font-medium italic">"Toca las opciones que mejor describan tu gran trabajo"</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                            {/* Datos Alumno */}
-                            <div className="bg-white p-8 rounded-[2rem] shadow-xl border-t-8 border-blue-400 transform transition-all">
+                            {/* Datos Personales */}
+                            <div className="bg-white p-8 rounded-[2rem] shadow-xl border-t-8 border-blue-400">
                                 <div className="mb-6">
                                     <label className="text-xs font-black text-blue-500 uppercase mb-3 block">Mi Nombre</label>
                                     <input type="text" placeholder="Escribe tu nombre..." className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl font-bold outline-none focus:border-blue-400 transition-all" value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} />
@@ -140,7 +152,7 @@
                             </div>
 
                             {/* Datos Lección */}
-                            <div className="bg-white p-8 rounded-[2rem] shadow-xl border-t-8 border-amber-400 transform transition-all">
+                            <div className="bg-white p-8 rounded-[2rem] shadow-xl border-t-8 border-amber-400">
                                 <div className="mb-6">
                                     <label className="text-xs font-black text-amber-600 uppercase mb-3 block">Materia</label>
                                     <select className="w-full p-4 bg-amber-50 border-2 border-amber-100 rounded-2xl font-bold cursor-pointer" value={formData.materia} onChange={e => setFormData({...formData, materia: e.target.value})}>
@@ -178,6 +190,54 @@
                             </div>
                         </section>
 
+                        {/* Mi Sentimiento */}
+                        <section className="bg-white p-10 rounded-[2.5rem] shadow-xl border-b-8 border-slate-100 mb-10 text-center">
+                            <h3 className="text-2xl font-black text-[#1e3a45] mb-8">🌈 ¿Cómo me sentí?</h3>
+                            <div className="flex justify-center gap-8 md:gap-16">
+                                {[
+                                    { id: 'feliz', emoji: '😄', label: '¡Feliz!' },
+                                    { id: 'neutral', emoji: '😐', label: 'Normal' },
+                                    { id: 'triste', emoji: '😔', label: 'Cansado' }
+                                ].map(s => (
+                                    <button 
+                                        key={s.id} 
+                                        onClick={() => setEvaluacion({...evaluacion, sentimiento: s.id})}
+                                        className={`flex flex-col items-center transition-all transform hover:scale-110 ${evaluacion.sentimiento === s.id ? 'scale-125' : 'grayscale opacity-40'}`}
+                                    >
+                                        <span className="text-6xl mb-2 drop-shadow-sm">{s.emoji}</span>
+                                        <span className={`text-[10px] font-black uppercase tracking-widest ${evaluacion.sentimiento === s.id ? 'text-[#1e3a45]' : 'text-slate-400'}`}>
+                                            {s.label}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Cómo puedo mejorar */}
+                        <section className="bg-white p-10 rounded-[2.5rem] shadow-xl border-b-8 border-slate-100 mb-10">
+                            <h3 className="text-2xl font-black text-[#1e3a45] mb-8 flex items-center gap-3">
+                                <span className="bg-amber-100 p-2 rounded-xl">🎯</span> ¿Cómo puedo mejorar?
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {[
+                                    { id: 'apuntes', label: 'Tomar mejores apuntes', icon: '📝' },
+                                    { id: 'dudas', label: 'Preguntar más mis dudas', icon: '🙋‍♂️' },
+                                    { id: 'tiempo', label: 'Organizar mejor mi tiempo', icon: '⏰' },
+                                    { id: 'repasar', label: 'Repasar más en casa', icon: '📖' }
+                                ].map(item => (
+                                    <button 
+                                        key={item.id}
+                                        onClick={() => toggleMejora(item.id)}
+                                        className={`flex items-center gap-4 p-5 rounded-2xl border-2 transition-all text-left ${evaluacion.mejora[item.id] ? 'bg-amber-500 border-amber-600 text-white shadow-md' : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-amber-200'}`}
+                                    >
+                                        <span className="text-2xl">{item.icon}</span>
+                                        <span className="font-bold text-sm">{item.label}</span>
+                                        {evaluacion.mejora[item.id] && <div className="ml-auto bg-white/20 p-1 rounded-full"><LucideIcon name="check" size={14} /></div>}
+                                    </button>
+                                ))}
+                            </div>
+                        </section>
+
                         {/* Comprensión */}
                         <section className="bg-white p-10 rounded-[2.5rem] shadow-xl border-b-8 border-slate-100 mb-12 text-center">
                             <h3 className="text-2xl font-black text-[#1e3a45] mb-8">💡 ¿Cuánto aprendí?</h3>
@@ -193,19 +253,19 @@
                             </div>
                         </section>
 
-                        {/* Botones Finales */}
+                        {/* Botones */}
                         <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                            <button onClick={() => window.location.reload()} className="px-8 py-5 rounded-[1.5rem] border-4 border-slate-200 text-slate-400 font-black hover:bg-white hover:text-rose-500 hover:border-rose-200 transition-all shadow-md">LIMPIAR</button>
-                            <button onClick={generateReport} className="px-16 py-5 rounded-[1.5rem] bg-[#eab308] text-[#1e3a45] font-black text-xl shadow-[0_10px_0_0_#ca8a04] hover:-translate-y-1 active:translate-y-1 active:shadow-none transition-all">¡GENERAR MI REPORTE!</button>
+                            <button onClick={() => window.location.reload()} className="px-8 py-5 rounded-[1.5rem] border-4 border-slate-200 text-slate-400 font-black hover:bg-white hover:text-rose-500 hover:border-rose-200 transition-all shadow-md">REINICIAR</button>
+                            <button onClick={generateReport} className="px-16 py-5 rounded-[1.5rem] bg-[#eab308] text-[#1e3a45] font-black text-xl shadow-[0_10px_0_0_#ca8a04] hover:-translate-y-1 active:translate-y-1 active:shadow-none transition-all">¡FINALIZAR MI TRABAJO!</button>
                         </div>
 
-                        {/* Modal del Reporte */}
+                        {/* REPORTE FINAL */}
                         {showReport && (
                             <div className="fixed inset-0 bg-[#1e3a45]/95 backdrop-blur-xl z-50 flex flex-col items-center justify-center p-4 overflow-y-auto">
                                 <div ref={reportRef} className="bg-white rounded-[2.5rem] max-w-lg w-full overflow-hidden shadow-2xl border-8 border-white mb-6 animate-in zoom-in duration-300">
                                     <div className="bg-[#1e3a45] p-8 text-center text-white relative">
                                         <LucideIcon name="award" size={64} className="mx-auto text-yellow-400 mb-4" />
-                                        <h4 className="text-2xl font-black">REPORTE DE ÉXITO</h4>
+                                        <h4 className="text-2xl font-black">INSIGNIA DE LOGRO</h4>
                                         <p className="text-yellow-400 text-[10px] font-black uppercase tracking-widest">ESCOLARIS • {formData.grado}</p>
                                     </div>
                                     <div className="p-8 space-y-4">
@@ -217,33 +277,59 @@
                                             <p className="text-amber-600 text-[10px] uppercase mb-1">{formData.materia}</p>
                                             <p className="text-lg">"{formData.leccion}"</p>
                                         </div>
-                                        <div className="bg-slate-50 p-4 rounded-xl flex flex-wrap gap-2 justify-center border-2 border-dashed border-slate-200">
-                                            {evaluacion.esfuerzo.ley && <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase">Lectura</span>}
-                                            {evaluacion.esfuerzo.viVideos && <span className="bg-sky-500 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase">Videos</span>}
-                                            {evaluacion.esfuerzo.hiceTareas && <span className="bg-indigo-500 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase">Tareas</span>}
-                                            {evaluacion.esfuerzo.fuiPuntual && <span className="bg-rose-500 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase">Puntual</span>}
-                                            {!Object.values(evaluacion.esfuerzo).some(v => v) && <span className="text-[9px] text-slate-400 font-black italic">Sin metas registradas</span>}
-                                        </div>
-                                        <div className="text-center pt-4 border-t">
-                                            <div className="flex justify-center gap-1 text-yellow-400 mb-1">
-                                                {[...Array(evaluacion.comprension)].map((_, i) => <LucideIcon key={i} name="star" size={28} className="fill-current" />)}
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-purple-50 p-4 rounded-xl text-center border-2 border-purple-100">
+                                                <span className="block text-[10px] font-black text-purple-400 uppercase mb-1">Mi Ánimo</span>
+                                                <span className="text-3xl">{evaluacion.sentimiento === 'feliz' ? '😄' : evaluacion.sentimiento === 'neutral' ? '😐' : '😔'}</span>
                                             </div>
-                                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Logro de Aprendizaje: {evaluacion.comprension}/5</p>
+                                            <div className="bg-yellow-50 p-4 rounded-xl text-center border-2 border-yellow-100">
+                                                <span className="block text-[10px] font-black text-yellow-600 uppercase mb-1">Aprendizaje</span>
+                                                <div className="flex justify-center text-yellow-400">
+                                                    {[...Array(evaluacion.comprension)].map((_, i) => <LucideIcon key={i} name="star" size={16} className="fill-current" />)}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <div className="bg-slate-50 p-4 rounded-xl border-2 border-dashed border-slate-200">
+                                                <h5 className="text-[10px] font-black text-slate-400 uppercase text-center mb-2">Lo que logré hoy:</h5>
+                                                <div className="flex flex-wrap justify-center gap-2">
+                                                    {evaluacion.esfuerzo.ley && <span className="bg-emerald-500 text-white px-2 py-1 rounded-full text-[8px] font-black uppercase">Lectura ✓</span>}
+                                                    {evaluacion.esfuerzo.viVideos && <span className="bg-sky-500 text-white px-2 py-1 rounded-full text-[8px] font-black uppercase">Videos ✓</span>}
+                                                    {evaluacion.esfuerzo.hiceTareas && <span className="bg-indigo-500 text-white px-2 py-1 rounded-full text-[8px] font-black uppercase">Tareas ✓</span>}
+                                                    {evaluacion.esfuerzo.fuiPuntual && <span className="bg-rose-500 text-white px-2 py-1 rounded-full text-[8px] font-black uppercase">Puntual ✓</span>}
+                                                </div>
+                                            </div>
+
+                                            {Object.values(evaluacion.mejora).some(v => v) && (
+                                                <div className="bg-amber-50 p-4 rounded-xl border-2 border-amber-100">
+                                                    <h5 className="text-[10px] font-black text-amber-500 uppercase text-center mb-2">Mi compromiso para mejorar:</h5>
+                                                    <div className="flex flex-wrap justify-center gap-2">
+                                                        {evaluacion.mejora.apuntes && <span className="text-[9px] font-bold text-amber-700">📝 Apuntes</span>}
+                                                        {evaluacion.mejora.dudas && <span className="text-[9px] font-bold text-amber-700">🙋‍♂️ Dudas</span>}
+                                                        {evaluacion.mejora.tiempo && <span className="text-[9px] font-bold text-amber-700">⏰ Tiempo</span>}
+                                                        {evaluacion.mejora.repasar && <span className="text-[9px] font-bold text-amber-700">📖 Repasar</span>}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                    <div className="bg-yellow-50 p-3 text-center">
-                                        <p className="text-[9px] text-amber-600 font-black uppercase tracking-tighter">FECHA: {new Date().toLocaleDateString()} • {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                                    <div className="bg-yellow-50 p-3 text-center border-t border-yellow-100">
+                                        <p className="text-[9px] text-amber-600 font-black uppercase tracking-tighter italic">"¡Sigue esforzándote, vas por un gran camino!"</p>
+                                        <p className="text-[8px] text-amber-400 font-bold uppercase mt-1">{new Date().toLocaleDateString()}</p>
                                     </div>
                                 </div>
 
-                                {/* Instrucciones y Botones */}
                                 <div className="max-w-lg w-full space-y-4">
                                     <div className="bg-white/10 border border-white/20 p-6 rounded-[2rem] text-white">
-                                        <h5 className="text-center font-black text-yellow-400 uppercase mb-4 tracking-widest">¿Cómo compartir tu éxito?</h5>
+                                        <h5 className="text-center font-black text-yellow-400 uppercase mb-4 tracking-widest flex items-center justify-center gap-2">
+                                            <LucideIcon name="share-2" size={18} /> ¿Cómo entregar tu tarea?
+                                        </h5>
                                         <div className="space-y-3 text-xs font-bold">
-                                            <div className="flex items-center gap-3"><div className="bg-yellow-400 text-[#1e3a45] w-6 h-6 rounded-full flex items-center justify-center font-black shrink-0">1</div> Pulsa el botón verde de "DESCARGAR PNG".</div>
-                                            <div className="flex items-center gap-3"><div className="bg-yellow-400 text-[#1e3a45] w-6 h-6 rounded-full flex items-center justify-center font-black shrink-0">2</div> Busca la imagen en tu carpeta de "Descargas".</div>
-                                            <div className="flex items-center gap-3"><div className="bg-yellow-400 text-[#1e3a45] w-6 h-6 rounded-full flex items-center justify-center font-black shrink-0">3</div> Sube ese archivo a la plataforma de clases.</div>
+                                            <div className="flex items-center gap-3"><div className="bg-yellow-400 text-[#1e3a45] w-6 h-6 rounded-full flex items-center justify-center font-black shrink-0">1</div> Pulsa "DESCARGAR REPORTE".</div>
+                                            <div className="flex items-center gap-3"><div className="bg-yellow-400 text-[#1e3a45] w-6 h-6 rounded-full flex items-center justify-center font-black shrink-0">2</div> Busca la foto en tus descargas.</div>
+                                            <div className="flex items-center gap-3"><div className="bg-yellow-400 text-[#1e3a45] w-6 h-6 rounded-full flex items-center justify-center font-black shrink-0">3</div> Sube la foto a la plataforma.</div>
                                         </div>
                                     </div>
                                     <div className="flex flex-col sm:flex-row gap-4">
