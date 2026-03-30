@@ -1,0 +1,384 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { CheckCircle2, BookOpen, Video, PenTool, Clock, Star, Trash2, Sparkles, Award, Download, Share2, MousePointer2, FileImage } from 'lucide-react';
+
+// Cargaremos html2canvas dinámicamente para permitir la descarga de la imagen
+const loadHtml2Canvas = () => {
+  return new Promise((resolve) => {
+    if (window.html2canvas) return resolve(window.html2canvas);
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.onload = () => resolve(window.html2canvas);
+    document.head.appendChild(script);
+  });
+};
+
+const App = () => {
+  const [formData, setFormData] = useState({
+    nombre: '',
+    grado: '4° Primaria',
+    materia: 'Ciencias Naturales',
+    leccion: '',
+  });
+
+  const [evaluacion, setEvaluacion] = useState({
+    esfuerzo: {
+      ley: false,
+      viVideos: false,
+      hiceTareas: false,
+      fuiPuntual: false
+    },
+    comprension: 3,
+  });
+
+  const [showReport, setShowReport] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const reportRef = useRef(null);
+
+  const materias = [
+    "Ciencias Naturales",
+    "Formación Ciudadana",
+    "Comunicación y Lenguaje"
+  ];
+
+  const grados = [
+    "4° Primaria",
+    "5° Primaria",
+    "6° Primaria"
+  ];
+
+  const toggleEsfuerzo = (key) => {
+    setEvaluacion(prev => ({
+      ...prev,
+      esfuerzo: { ...prev.esfuerzo, [key]: !prev.esfuerzo[key] }
+    }));
+  };
+
+  const handleReset = () => {
+    if (confirm("¿Estás seguro de que quieres limpiar todos los datos?")) {
+      setFormData({ nombre: '', grado: '4° Primaria', materia: 'Ciencias Naturales', leccion: '' });
+      setEvaluacion({
+        esfuerzo: { ley: false, viVideos: false, hiceTareas: false, fuiPuntual: false },
+        comprension: 3
+      });
+      setShowReport(false);
+    }
+  };
+
+  const generateReport = () => {
+    if (!formData.nombre || !formData.leccion) {
+      alert("¡Ups! Por favor escribe tu nombre y el nombre de la lección antes de terminar.");
+      return;
+    }
+    setShowReport(true);
+  };
+
+  const downloadPNG = async () => {
+    setIsDownloading(true);
+    const html2canvas = await loadHtml2Canvas();
+    if (reportRef.current) {
+      // Pequeño ajuste para asegurar que los estilos se rendericen bien
+      const canvas = await html2canvas(reportRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2, // Mejor calidad
+        logging: false,
+        useCORS: true
+      });
+      
+      const image = canvas.toDataURL("image/png");
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = `Reporte_Escolaris_${formData.nombre.replace(/\s+/g, '_')}.png`;
+      link.click();
+    }
+    setIsDownloading(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f0f9ff] font-sans text-slate-800 pb-20">
+      {/* Header Vibrante */}
+      <header className="bg-[#1e3a45] text-white p-5 shadow-lg border-b-4 border-[#eab308]">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="bg-white p-2 rounded-2xl rotate-3 shadow-md">
+               <PenTool size={28} className="text-[#eab308]" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black tracking-tight leading-none text-white">ESCOLARIS</h1>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-yellow-400 font-bold">Educación para trascender</p>
+            </div>
+          </div>
+          <div className="hidden sm:flex items-center gap-2 bg-[#ffffff20] px-4 py-2 rounded-full border border-[#ffffff30]">
+             <Sparkles size={16} className="text-yellow-300" />
+             <span className="text-xs font-black uppercase tracking-wider">{formData.grado}</span>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-4 py-10">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl md:text-5xl font-black text-[#1e3a45] mb-4 drop-shadow-sm">
+            ¿Cómo me fue hoy? 🎨
+          </h2>
+          <p className="text-lg text-slate-500 font-medium">Completa tu autoevaluación y descarga tu insignia de éxito.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+          {/* Datos Personales */}
+          <div className="bg-white p-8 rounded-[2rem] shadow-xl shadow-blue-900/5 border-t-8 border-blue-400 transform transition-transform">
+            <div className="mb-6">
+              <label className="flex items-center gap-2 text-xs font-black text-blue-500 uppercase mb-3">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div> Mi Nombre
+              </label>
+              <input 
+                type="text" 
+                placeholder="Escribe aquí tu nombre..."
+                className="w-full p-4 bg-blue-50/50 border-2 border-blue-100 rounded-2xl focus:border-blue-400 focus:bg-white outline-none transition-all text-lg font-bold text-[#1e3a45]"
+                value={formData.nombre}
+                onChange={(e) => setFormData({...formData, nombre: e.target.value})}
+              />
+            </div>
+
+            <div>
+              <label className="flex items-center gap-2 text-xs font-black text-blue-500 uppercase mb-3">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div> Mi Grado
+              </label>
+              <select 
+                className="w-full p-4 bg-blue-50/50 border-2 border-blue-100 rounded-2xl focus:border-blue-400 focus:bg-white outline-none transition-all font-bold text-[#1e3a45] cursor-pointer"
+                value={formData.grado}
+                onChange={(e) => setFormData({...formData, grado: e.target.value})}
+              >
+                {grados.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Datos de la Lección */}
+          <div className="bg-white p-8 rounded-[2rem] shadow-xl shadow-amber-900/5 border-t-8 border-amber-400 transform transition-transform">
+            <div className="mb-6">
+              <label className="flex items-center gap-2 text-xs font-black text-amber-600 uppercase mb-3">
+                <div className="w-2 h-2 bg-amber-400 rounded-full"></div> Materia
+              </label>
+              <select 
+                className="w-full p-4 bg-amber-50/50 border-2 border-amber-100 rounded-2xl focus:border-amber-400 focus:bg-white outline-none transition-all font-bold text-[#1e3a45] cursor-pointer"
+                value={formData.materia}
+                onChange={(e) => setFormData({...formData, materia: e.target.value})}
+              >
+                {materias.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-2 text-xs font-black text-amber-600 uppercase mb-3">
+                <div className="w-2 h-2 bg-amber-400 rounded-full"></div> Nombre de la Lección
+              </label>
+              <input 
+                type="text" 
+                placeholder="Ej. La Fotosíntesis"
+                className="w-full p-4 bg-amber-50/50 border-2 border-amber-100 rounded-2xl focus:border-amber-400 focus:bg-white outline-none transition-all text-lg font-bold text-[#1e3a45]"
+                value={formData.leccion}
+                onChange={(e) => setFormData({...formData, leccion: e.target.value})}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Sección de Esfuerzo */}
+        <section className="bg-white p-10 rounded-[2.5rem] shadow-xl border-b-8 border-slate-100 mb-10">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="bg-purple-100 p-3 rounded-2xl">
+               <span className="text-3xl text-white">🚀</span>
+            </div>
+            <div>
+              <h3 className="text-2xl font-black text-[#1e3a45]">Mi Esfuerzo</h3>
+              <p className="text-sm text-slate-400 font-bold text-white">¿Qué hiciste hoy para aprender?</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { id: 'ley', label: 'Leí contenido', icon: <BookOpen />, color: 'emerald' },
+              { id: 'viVideos', label: 'Vi videos', icon: <Video />, color: 'sky' },
+              { id: 'hiceTareas', label: 'Hice tareas', icon: <PenTool />, color: 'indigo' },
+              { id: 'fuiPuntual', label: 'Fui puntual', icon: <Clock />, color: 'rose' }
+            ].map(item => {
+              const isActive = evaluacion.esfuerzo[item.id];
+              const colorClasses = {
+                emerald: isActive ? 'bg-emerald-500 border-emerald-600 text-white shadow-emerald-200' : 'bg-emerald-50 text-emerald-300 border-emerald-100',
+                sky: isActive ? 'bg-sky-500 border-sky-600 text-white shadow-sky-200' : 'bg-sky-50 text-sky-300 border-sky-100',
+                indigo: isActive ? 'bg-indigo-500 border-indigo-600 text-white shadow-indigo-200' : 'bg-indigo-50 text-indigo-300 border-indigo-100',
+                rose: isActive ? 'bg-rose-500 border-rose-600 text-white shadow-rose-200' : 'bg-rose-50 text-rose-300 border-rose-100',
+              };
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => toggleEsfuerzo(item.id)}
+                  className={`flex flex-col items-center justify-center p-6 rounded-[2rem] border-b-4 transition-all transform active:scale-95 shadow-lg ${colorClasses[item.color]}`}
+                >
+                  <div className={`mb-3 transition-transform ${isActive ? 'scale-125' : 'scale-100'}`}>
+                    {item.icon}
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-wider text-center leading-tight">
+                    {item.label}
+                  </span>
+                  {isActive && <div className="mt-2 bg-white/20 px-2 py-0.5 rounded-full text-[8px]">¡LOGRADO!</div>}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Sección de Comprensión */}
+        <section className="bg-white p-10 rounded-[2.5rem] shadow-xl border-b-8 border-slate-100 mb-12 text-center">
+          <div className="flex items-center justify-center gap-4 mb-8">
+             <div className="bg-yellow-100 p-3 rounded-2xl">
+               <span className="text-3xl text-white">💡</span>
+            </div>
+            <div className="text-left">
+              <h3 className="text-2xl font-black text-[#1e3a45]">¿Cuánto aprendí?</h3>
+              <p className="text-sm text-slate-400 font-bold text-white">Califica tu aprendizaje</p>
+            </div>
+          </div>
+          
+          <div className="flex justify-center gap-4 mb-6">
+            {[1, 2, 3, 4, 5].map(star => (
+              <button
+                key={star}
+                onClick={() => setEvaluacion(prev => ({...prev, comprension: star}))}
+                className={`transition-all transform hover:scale-125 active:scale-90 ${evaluacion.comprension >= star ? 'text-yellow-400 scale-110 drop-shadow-md' : 'text-slate-200'}`}
+              >
+                <Star size={54} fill={evaluacion.comprension >= star ? "currentColor" : "none"} strokeWidth={3} />
+              </button>
+            ))}
+          </div>
+          <span className="bg-[#1e3a45] text-white px-8 py-2 rounded-full text-sm font-black uppercase tracking-widest inline-block shadow-lg">
+                {evaluacion.comprension === 5 ? "🌟 ¡Soy un experto! 🌟" : 
+                 evaluacion.comprension >= 4 ? "✨ ¡Entendí súper bien! ✨" :
+                 evaluacion.comprension >= 3 ? "👍 ¡Voy por buen camino! 👍" : 
+                 evaluacion.comprension >= 2 ? "📚 Necesito repasar un poco" : "🤔 Necesito ayuda del profe"}
+          </span>
+        </section>
+
+        {/* Botones de Acción */}
+        <div className="flex flex-col sm:flex-row gap-6 justify-center">
+          <button 
+            onClick={handleReset}
+            className="flex items-center justify-center gap-3 px-8 py-5 rounded-[1.5rem] border-4 border-slate-200 text-slate-400 font-black hover:bg-white hover:border-rose-400 hover:text-rose-400 transition-all shadow-lg"
+          >
+            <Trash2 size={24} />
+            LIMPIAR TODO
+          </button>
+          <button 
+            onClick={generateReport}
+            className="group flex items-center justify-center gap-4 px-16 py-5 rounded-[1.5rem] bg-[#eab308] text-[#1e3a45] font-black text-xl hover:bg-[#facc15] shadow-[0_10px_0_0_#ca8a04] hover:shadow-[0_12px_0_0_#ca8a04] transition-all transform hover:-translate-y-1 active:translate-y-1 active:shadow-none"
+          >
+            <CheckCircle2 size={28} />
+            ¡GENERAR MI REPORTE!
+          </button>
+        </div>
+
+        {/* REPORTE Y MODAL DE DESCARGA */}
+        {showReport && (
+          <div className="fixed inset-0 bg-[#1e3a45]/95 backdrop-blur-xl z-50 flex flex-col items-center justify-center p-4 overflow-y-auto">
+            
+            {/* Contenedor del Reporte (Este es el que se convierte en imagen) */}
+            <div ref={reportRef} className="bg-white rounded-[2.5rem] max-w-lg w-full overflow-hidden shadow-2xl border-8 border-white mb-6">
+              <div className="bg-[#1e3a45] p-8 text-center relative">
+                <Award size={64} className="mx-auto text-yellow-400 mb-4" />
+                <h4 className="text-2xl font-black text-white leading-tight">REPORTE DE ÉXITO</h4>
+                <p className="text-yellow-400 text-[10px] font-black tracking-widest uppercase">ESCOLARIS • {formData.grado}</p>
+              </div>
+
+              <div className="p-8 space-y-5">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between bg-blue-50 p-4 rounded-xl">
+                    <span className="text-[10px] font-black text-blue-400 uppercase">Estudiante</span>
+                    <span className="font-black text-[#1e3a45]">{formData.nombre}</span>
+                  </div>
+                  <div className="bg-amber-50 p-4 rounded-xl text-center">
+                    <span className="block text-[10px] font-black text-amber-600 uppercase mb-1">Materia y Lección</span>
+                    <span className="block font-black text-[#1e3a45] text-lg">{formData.materia}: "{formData.leccion}"</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 p-5 rounded-2xl border-2 border-dashed border-slate-200">
+                  <h5 className="text-[10px] font-black text-slate-400 uppercase text-center mb-3">Metas logradas hoy:</h5>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {evaluacion.esfuerzo.ley && <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-[9px] font-black">LECTURA ✓</span>}
+                    {evaluacion.esfuerzo.viVideos && <span className="bg-sky-500 text-white px-3 py-1 rounded-full text-[9px] font-black">VIDEO ✓</span>}
+                    {evaluacion.esfuerzo.hiceTareas && <span className="bg-indigo-500 text-white px-3 py-1 rounded-full text-[9px] font-black">TAREA ✓</span>}
+                    {evaluacion.esfuerzo.fuiPuntual && <span className="bg-rose-500 text-white px-3 py-1 rounded-full text-[9px] font-black">PUNTUAL ✓</span>}
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center pt-2">
+                   <div className="flex gap-1 text-yellow-400 mb-1">
+                     {[...Array(evaluacion.comprension)].map((_, i) => <Star key={i} size={28} fill="currentColor" />)}
+                   </div>
+                   <p className="text-[10px] font-black text-[#1e3a45] uppercase tracking-[0.2em]">LOGRO: {evaluacion.comprension}/5</p>
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 text-center">
+                  <p className="text-[9px] text-slate-400 font-bold uppercase">{new Date().toLocaleDateString()} • {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Panel de Instrucciones y Botones */}
+            <div className="max-w-lg w-full space-y-4">
+              
+              {/* Instrucciones Paso a Paso */}
+              <div className="bg-white/10 border border-white/20 p-6 rounded-[2rem] text-white">
+                <h5 className="text-center font-black text-yellow-400 uppercase tracking-widest mb-4 flex items-center justify-center gap-2">
+                  <Share2 size={18} /> ¿Cómo compartir mi reporte?
+                </h5>
+                <div className="grid grid-cols-1 gap-4 text-xs">
+                  <div className="flex items-center gap-4 bg-white/5 p-3 rounded-xl">
+                    <div className="bg-yellow-400 text-[#1e3a45] w-6 h-6 rounded-full flex items-center justify-center font-black shrink-0">1</div>
+                    <p className="font-bold">Presiona el botón <span className="text-yellow-400">DESCARGAR REPORTE</span> de abajo.</p>
+                  </div>
+                  <div className="flex items-center gap-4 bg-white/5 p-3 rounded-xl">
+                    <div className="bg-yellow-400 text-[#1e3a45] w-6 h-6 rounded-full flex items-center justify-center font-black shrink-0">2</div>
+                    <p className="font-bold">Busca la imagen en tu carpeta de <span className="text-blue-300">Descargas</span> o Galería.</p>
+                  </div>
+                  <div className="flex items-center gap-4 bg-white/5 p-3 rounded-xl">
+                    <div className="bg-yellow-400 text-[#1e3a45] w-6 h-6 rounded-full flex items-center justify-center font-black shrink-0">3</div>
+                    <p className="font-bold">Sube la imagen a la plataforma como una tarea normal.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botones de acción del Modal */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button 
+                  onClick={() => setShowReport(false)}
+                  className="flex-1 py-4 rounded-2xl border-2 border-white/20 text-white font-black uppercase tracking-widest hover:bg-white/10 transition-all"
+                >
+                  Regresar
+                </button>
+                <button 
+                  onClick={downloadPNG}
+                  disabled={isDownloading}
+                  className={`flex-[2] py-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl transition-all transform hover:scale-105 active:scale-95 ${isDownloading ? 'bg-slate-400 cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-400'}`}
+                >
+                  {isDownloading ? (
+                    <>Cargando...</>
+                  ) : (
+                    <>
+                      <Download size={24} />
+                      DESCARGAR REPORTE (Imagen)
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+            
+            <p className="mt-6 text-white/40 text-[10px] font-bold uppercase tracking-widest">Escolaris Autoevaluación v2.0</p>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default App;
